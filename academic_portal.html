@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>امتحانات | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+<header class="nav-wrap"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{% if site_logo %}<img src="/static/uploads/{{ site_logo }}" alt="">{% else %}{{ icons.school|safe }}{% endif %}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <div class="panel-nav">
+    <a href="/dashboard" class="btn btn-light">بازگشت به پنل</a>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">خروج</button>
+    </form>
+  </div>
+</div></header>
+
+<main class="container panel-wrap">
+<section class="panel-heading">
+  <div><h1>برنامه و نتایج امتحانات</h1><p>زمان‌بندی، فایل‌ها و نتایج</p></div>
+  <span class="badge-role">{{ icons.calendar|safe }} امتحانات</span>
+</section>
+
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+  <div class="notice notice-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+{% endfor %}
+
+{% if role in ('admin','owner','teacher') %}
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.plus|safe }} ثبت برنامه امتحان</h2>
+  <form method="post" action="{{ url_for('add_exam_schedule') }}" enctype="multipart/form-data" class="panel-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="panel-grid">
+      <input name="title" required placeholder="عنوان برنامه">
+      <input name="subject" required placeholder="درس">
+      <select name="class_name">
+        <option value="">همه کلاس‌ها</option>
+        {% for c in classes %}<option value="{{ c }}">کلاس {{ c }}</option>{% endfor %}
+      </select>
+      <input type="date" name="exam_date" required>
+      <input type="time" name="exam_time">
+    </div>
+    <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg">
+    <textarea name="details" placeholder="توضیحات"></textarea>
+    <button class="btn btn-primary" type="submit">ذخیره برنامه</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.calendar|safe }} برنامه امتحانات</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>عنوان</th><th>درس</th><th>کلاس</th><th>تاریخ</th><th>ساعت</th><th>فایل</th></tr>
+      {% for e in exams %}
+      <tr>
+        <td>{{ e.title }}</td><td>{{ e.subject }}</td>
+        <td>{{ e.class_name or 'همه' }}</td>
+        <td>{{ e.exam_date }}</td>
+        <td>{{ e.exam_time or '—' }}</td>
+        <td>{% if e.file_name %}<a href="{{ url_for('protected_attachment', filename=e.file_name) }}" class="file-chip">دریافت</a>{% else %}—{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="empty">برنامه‌ای ثبت نشده است.</td></tr>{% endfor %}
+    </table>
+  </div>
+</section>
+
+{% if role == 'teacher' %}
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.plus|safe }} ثبت نتیجه امتحان</h2>
+  <form method="post" action="{{ url_for('add_exam_result') }}" enctype="multipart/form-data" class="panel-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="panel-grid">
+      <select name="student_id" required>
+        <option value="">دانش‌آموز</option>
+        {% for s in students %}<option value="{{ s.id }}">{{ s.full_name }} — {{ s.class_name }}</option>{% endfor %}
+      </select>
+      <select name="exam_id">
+        <option value="">بدون پیوند</option>
+        {% for e in exams %}<option value="{{ e.id }}">{{ e.title }} — {{ e.subject }}</option>{% endfor %}
+      </select>
+      <input name="subject" required placeholder="درس">
+      <input type="number" name="score" min="0" max="20" step=".25" required placeholder="نمره">
+      <input name="note" placeholder="توضیح">
+    </div>
+    <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg">
+    <button class="btn btn-primary" type="submit">ثبت نتیجه</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="panel-card full">
+  <h2>{{ icons.check|safe }} نتایج ثبت‌شده</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>دانش‌آموز</th><th>درس</th><th>نمره</th><th>توضیح</th><th>فایل</th><th>تاریخ</th></tr>
+      {% for r in results %}
+      <tr>
+        <td>{{ r.student_name if r.student_name is defined else '' }}</td>
+        <td>{{ r.subject }}</td>
+        <td><strong>{{ r.score }}</strong> / ۲۰</td>
+        <td>{{ r.note or '—' }}</td>
+        <td>{% if r.file_name %}<a href="{{ url_for('protected_attachment', filename=r.file_name) }}" class="file-chip">دریافت</a>{% else %}—{% endif %}</td>
+        <td style="font-size:11px;color:var(--muted)">{{ r.created_at[:10] }}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="empty">نتیجه‌ای ثبت نشده است.</td></tr>{% endfor %}
+    </table>
+  </div>
+</section>
+</main>
+</body></html>

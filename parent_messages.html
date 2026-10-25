@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>پیام والدین | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+<header class="nav-wrap"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{% if site_logo %}<img src="/static/uploads/{{ site_logo }}" alt="">{% else %}{{ icons.school|safe }}{% endif %}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <div class="panel-nav">
+    <a href="/dashboard" class="btn btn-light">بازگشت به پنل</a>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">خروج</button>
+    </form>
+  </div>
+</div></header>
+
+<main class="container panel-wrap">
+<section class="panel-heading">
+  <div><h1>پیام‌های والدین</h1><p>پاسخ به پیام‌های ارسالی اولیا</p></div>
+  <span class="badge-role">{{ icons.comment|safe }} پیام‌ها</span>
+</section>
+
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+  <div class="notice notice-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+{% endfor %}
+
+{% for r in rows %}
+<section class="panel-card full" style="margin-bottom:12px">
+  <h2 style="font-size:15px">{{ r.parent_name }} — {{ r.student_name }}</h2>
+  <small style="color:var(--muted)">{{ r.created_at }}</small>
+  <p style="margin:8px 0">{{ r.body }}</p>
+  <form method="post" action="{{ url_for('teacher_reply_parent', message_id=r.id) }}" class="panel-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <textarea name="body" required maxlength="3000" placeholder="پاسخ به والد"></textarea>
+    <button class="btn btn-primary" type="submit">ارسال پاسخ</button>
+  </form>
+</section>
+{% else %}
+<div class="empty-state">
+  <div class="icon">{{ icons.comment|safe }}</div>
+  <h3>پیامی وجود ندارد</h3>
+  <p>هنوز والدی پیامی ارسال نکرده است.</p>
+</div>
+{% endfor %}
+</main>
+</body></html>

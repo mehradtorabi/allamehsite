@@ -1,0 +1,16 @@
+school.db
+*.db
+.secret_key
+.env
+__pycache__/
+*.pyc
+venv/
+.venv/
+backups/
+static/uploads/*
+!static/uploads/.gitkeep
+static/files/*
+!static/files/.gitkeep
+private_uploads/*
+!private_uploads/.gitkeep
+.DS_Store

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>پنل والدین | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+<header class="nav-wrap"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{% if site_logo %}<img src="/static/uploads/{{ site_logo }}" alt="">{% else %}{{ icons.school|safe }}{% endif %}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <div class="panel-nav">
+    <a href="/academics" class="btn btn-light">{{ icons.calendar|safe }} امتحانات</a>
+    <a href="/account" class="btn btn-light">{{ icons.key|safe }} تغییر رمز</a>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">خروج</button>
+    </form>
+  </div>
+</div></header>
+
+<main class="container panel-wrap">
+<section class="panel-heading">
+  <div><h1>پنل والدین</h1><p>سلام {{ session.get('full_name') }}</p></div>
+  <span class="badge-role">{{ icons.users|safe }} والدین</span>
+</section>
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+  <div class="notice notice-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+{% endfor %}
+
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.users|safe }} فرزندان متصل به حساب</h2>
+  {% for k in kids %}
+  <div style="padding:12px;background:#f7f9fd;border:1px solid var(--line);border-radius:12px;margin-bottom:8px">
+    <strong>{{ k.full_name }}</strong> <span style="color:var(--muted);font-size:12px">— کلاس {{ k.class_name or 'ثبت نشده' }} — {{ k.username }}</span>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);font-size:13px">هنوز دانش‌آموزی به این حساب متصل نشده است.</p>
+  {% endfor %}
+</section>
+
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.check|safe }} نمرات</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>دانش‌آموز</th><th>درس</th><th>نمره</th><th>نوبت</th><th>تاریخ</th></tr>
+      {% for g in grades %}
+      <tr><td>{{ g.student_name }}</td><td>{{ g.subject }}</td>
+        <td><strong>{{ g.score }}</strong> / ۲۰</td>
+        <td>{{ g.term or '—' }}</td>
+        <td style="font-size:11px;color:var(--muted)">{{ g.created_at[:10] }}</td></tr>
+      {% else %}<tr><td colspan="5" class="empty">نمره‌ای ثبت نشده است.</td></tr>{% endfor %}
+    </table>
+  </div>
+</section>
+
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.book|safe }} شهریه و اقساط</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>دانش‌آموز</th><th>عنوان</th><th>مبلغ</th><th>پرداخت‌شده</th><th>مانده</th><th>سررسید</th><th>وضعیت</th></tr>
+      {% for f in fees %}
+      <tr><td>{{ f.student_name }}</td><td>{{ f.title }}</td>
+        <td>{{ "{:,}".format(f.amount) }}</td>
+        <td>{{ "{:,}".format(f.paid_amount) }}</td>
+        <td>{{ "{:,}".format(f.amount-f.paid_amount) }}</td>
+        <td>{{ f.due_date or '—' }}</td>
+        <td>
+          {% if f.status=='paid' %}<span class="badge badge-student">تسویه</span>
+          {% elif f.status=='partial' %}<span class="badge badge-pending">بخشی</span>
+          {% else %}<span class="badge badge-off">پرداخت نشده</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="7" class="empty">اطلاعاتی ثبت نشده است.</td></tr>{% endfor %}
+    </table>
+  </div>
+</section>
+
+<section class="panel-card full">
+  <h2>{{ icons.comment|safe }} ارتباط با معلم</h2>
+  <form method="post" action="{{ url_for('parent_send_message') }}" class="panel-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="panel-grid" style="gap:10px">
+      <select name="student_id" required>
+        <option value="">— انتخاب فرزند —</option>
+        {% for k in kids %}<option value="{{ k.id }}">{{ k.full_name }}</option>{% endfor %}
+      </select>
+      <select name="teacher_id" required>
+        <option value="">— انتخاب معلم —</option>
+        {% for t in teachers %}<option value="{{ t.id }}">{{ t.full_name }}{% if t.class_name %} — {{ t.class_name }}{% endif %}</option>{% endfor %}
+      </select>
+    </div>
+    <textarea name="body" required maxlength="3000" placeholder="متن پیام" style="margin-top:8px"></textarea>
+    <button class="btn btn-primary" type="submit" style="margin-top:8px">ارسال پیام</button>
+  </form>
+
+  <h3 style="font-size:14px;color:var(--navy);margin:18px 0 10px">پیام‌های قبلی</h3>
+  <div class="panel-list">
+    {% for m in messages %}
+    <li>
+      <strong>{{ m.student_name }} ← {{ m.teacher_name }}</strong>
+      <small>{{ m.created_at }} — {{ 'شما' if m.sender_role == 'parent' else 'معلم' }}</small>
+      <p style="margin:6px 0">{{ m.body }}</p>
+    </li>
+    {% else %}<li class="empty">پیامی ثبت نشده است.</li>{% endfor %}
+  </div>
+</section>
+</main>
+</body></html>

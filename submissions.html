@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>پاسخ تکالیف | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+<header class="nav-wrap"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{% if site_logo %}<img src="/static/uploads/{{ site_logo }}" alt="">{% else %}{{ icons.school|safe }}{% endif %}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <div class="panel-nav">
+    <a href="/dashboard" class="btn btn-light">بازگشت به پنل</a>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">خروج</button>
+    </form>
+  </div>
+</div></header>
+
+<main class="container panel-wrap">
+<section class="panel-heading">
+  <div><h1>پاسخ‌های ارسالی دانش‌آموزان</h1><p>مجموع: {{ total }} پاسخ — صفحه {{ page }} از {{ pages }}</p></div>
+  <span class="badge-role">{{ icons.check|safe }} تکالیف</span>
+</section>
+
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+  <div class="notice notice-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+{% endfor %}
+
+{% for r in rows %}
+<section class="panel-card full" style="margin-bottom:12px">
+  <h2 style="font-size:15px">{{ r.student_name }} — {{ r.homework_title }}</h2>
+  <small style="color:var(--muted)">{{ r.submitted_at }}</small>
+  <p style="margin:8px 0">{{ r.body or 'پاسخ متنی ندارد.' }}</p>
+  {% if r.file_name %}
+  <a class="file-chip" href="{{ url_for('protected_attachment', filename=r.file_name) }}">
+    {{ icons.download|safe }} دریافت فایل پیوست
+  </a>
+  {% endif %}
+</section>
+{% else %}
+<div class="empty-state">
+  <div class="icon">{{ icons.check|safe }}</div>
+  <h3>پاسخی ارسال نشده</h3>
+  <p>هنوز دانش‌آموزی پاسخ نداده است.</p>
+</div>
+{% endfor %}
+
+{% if pages > 1 %}
+<div style="display:flex;gap:6px;margin-top:16px;justify-content:center">
+  {% if page > 1 %}<a class="btn btn-light btn-tiny" href="?page={{ page - 1 }}">‹ قبلی</a>{% endif %}
+  <span style="padding:8px 14px;background:var(--blue);color:#fff;border-radius:10px;font-size:12px;font-weight:800">{{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a class="btn btn-light btn-tiny" href="?page={{ page + 1 }}">بعدی ›</a>{% endif %}
+</div>
+{% endif %}
+</main>
+</body></html>

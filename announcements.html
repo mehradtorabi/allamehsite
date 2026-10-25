@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تابلوی اعلانات | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+{{ header|safe }}
+<section class="page-hero">
+  <div class="container page-hero-inner">
+    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+      <div class="page-hero-icon">{{ icons.bell|safe }}</div>
+      <div><h1>تابلوی اعلانات مدرسه</h1><p>اطلاعیه‌های رسمی، زمان‌بندی و اخبار مهم مدرسه</p></div>
+    </div>
+    <div class="page-hero-stats">
+      <div class="hs"><strong>{{ stats.total }}</strong><span>اعلان</span></div>
+      {% if stats.pinned %}<div class="hs"><strong>{{ stats.pinned }}</strong><span>سنجاق‌شده</span></div>{% endif %}
+      {% if stats.week %}<div class="hs"><strong>{{ stats.week }}</strong><span>این هفته</span></div>{% endif %}
+    </div>
+  </div>
+</section>
+<main class="container" style="padding:0 0 60px;min-height:50vh">
+  <div class="filter-chips">
+    <a href="/announcements" class="filter-chip-lg {% if not filter or filter == 'all' %}active{% endif %}">
+      همه <span class="count">{{ stats.total }}</span>
+    </a>
+    {% if stats.pinned %}
+    <a href="/announcements?filter=pinned" class="filter-chip-lg {% if filter == 'pinned' %}active{% endif %}">
+      📌 سنجاق‌شده <span class="count">{{ stats.pinned }}</span>
+    </a>
+    {% endif %}
+    {% if stats.week %}
+    <a href="/announcements?filter=week" class="filter-chip-lg {% if filter == 'week' %}active{% endif %}">
+      🆕 این هفته <span class="count">{{ stats.week }}</span>
+    </a>
+    {% endif %}
+  </div>
+  {% if pinned and (not filter or filter == 'all') %}
+  <h2 style="display:flex;align-items:center;gap:8px;font-size:16px;color:var(--navy);margin:0 0 16px;font-weight:800"><span style="width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)"></span>اعلان‌های سنجاق‌شده</h2>
+  <div class="ann-grid" style="margin-bottom:32px">
+    {% for a in pinned %}
+    <div class="ann-card pinned">
+      <div class="ann-card-header">
+        <div class="ann-card-icon">{{ icons.bell|safe }}</div>
+        <div style="flex:1"><span style="display:inline-block;font-size:10px;background:#fff7e0;color:#a86400;padding:2px 8px;border-radius:6px;font-weight:700;border:1px solid #f5d58a;margin-bottom:6px">📌 سنجاق‌شده</span>
+          <h3 class="ann-card-title">{{ a.title }}</h3></div>
+      </div>
+      <p class="ann-card-body">{{ a.body }}</p>
+      {% if a.image %}<img style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-bottom:14px" src="/static/uploads/{{ a.image }}" alt="">{% endif %}
+      {% if a.attachment %}<a class="file-chip" href="{{ url_for('public_file', filename=a.attachment) }}" target="_blank">{{ icons.download|safe }} دریافت فایل پیوست</a>{% endif %}
+      <div class="ann-card-footer">
+        {{ author_html(a.creator_name, a.creator_role)|safe }}
+        <span>{{ icons.calendar|safe }} {{ a.created_at[:10] }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if regular %}
+  <h2 style="display:flex;align-items:center;gap:8px;font-size:16px;color:var(--navy);margin:0 0 16px;font-weight:800"><span style="width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)"></span>
+    {% if filter == 'pinned' %}همه اعلان‌های سنجاق‌شده{% elif filter == 'week' %}اعلان‌های این هفته{% else %}اعلان‌های دیگر{% endif %}
+  </h2>
+  <div class="ann-grid">
+    {% for a in regular %}
+    <div class="ann-card {% if a.is_pinned %}pinned{% endif %}">
+      <div class="ann-card-header">
+        <div class="ann-card-icon">{{ icons.bell|safe }}</div>
+        <div style="flex:1">{% if a.is_pinned %}<span style="display:inline-block;font-size:10px;background:#fff7e0;color:#a86400;padding:2px 8px;border-radius:6px;font-weight:700;border:1px solid #f5d58a;margin-bottom:6px">📌 سنجاق‌شده</span>{% endif %}
+          <h3 class="ann-card-title">{{ a.title }}</h3></div>
+      </div>
+      <p class="ann-card-body">{{ a.body }}</p>
+      {% if a.image %}<img style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-bottom:14px" src="/static/uploads/{{ a.image }}" alt="">{% endif %}
+      {% if a.attachment %}<a class="file-chip" href="{{ url_for('public_file', filename=a.attachment) }}" target="_blank">{{ icons.download|safe }} دریافت فایل پیوست</a>{% endif %}
+      <div class="ann-card-footer">
+        {{ author_html(a.creator_name, a.creator_role)|safe }}
+        <span>{{ icons.calendar|safe }} {{ a.created_at[:10] }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if not pinned and not regular %}
+  <div class="empty-state">
+    <div class="icon">{{ icons.bell|safe }}</div>
+    <h3>هنوز اعلانی منتشر نشده</h3>
+    <p>به‌زودی اطلاعیه‌های مدرسه در اینجا نمایش داده می‌شوند.</p>
+    <a href="/" class="btn btn-light">بازگشت به خانه</a>
+  </div>
+  {% endif %}
+</main>
+{{ footer|safe }}
+</body></html>

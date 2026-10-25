@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حساب من | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+<header class="nav-wrap"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{{ icons.school|safe }}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <div class="panel-nav">
+    <a href="/dashboard" class="btn btn-light">بازگشت به پنل</a>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">خروج</button>
+    </form>
+  </div>
+</div></header>
+<main class="login-wrap"><div class="login-card">
+  <div class="brand-mark" style="margin-bottom:20px">{{ icons.key|safe }}</div>
+  <h1>تغییر رمز عبور</h1>
+  <p>رمز فعلی خود را وارد کنید. رمز جدید باید طبق سیاست نقش شما باشد.</p>
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="notice notice-{{ cat }}">{{ msg }}</div>
+  {% endfor %}
+  <form method="post" action="{{ url_for('account') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field"><label>رمز فعلی</label>
+      <input name="old" type="password" required autocomplete="current-password"></div>
+    <div class="field"><label>رمز جدید</label>
+      <input name="new" type="password" required minlength="8" maxlength="128" autocomplete="new-password"></div>
+    <div class="field"><label>تکرار رمز جدید</label>
+      <input name="confirm" type="password" required minlength="8" maxlength="128" autocomplete="new-password"></div>
+    <button class="btn btn-primary" type="submit" style="width:100%;margin-top:10px">
+      ذخیرهٔ رمز {{ icons.check|safe }}
+    </button>
+  </form>
+</div></main>
+</body></html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ post.title }} | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+{{ header|safe }}
+<main class="container" style="padding:50px 0;min-height:60vh">
+  <a href="/news" class="text-link" style="margin-bottom:20px">← بازگشت به اخبار</a>
+  <article class="single-post">
+    <span class="post-type-badge pt-{{ post.type }}" style="font-size:12px;padding:4px 14px">{{ post_types[post.type] }}</span>
+    <h1>{{ post.title }}</h1>
+    <div class="meta">
+      {{ author_html(post.creator_name, post.creator_role)|safe }}
+      <span>{{ icons.calendar|safe }} {{ post.created_at[:10] }}</span>
+    </div>
+    {% if post.image %}<img class="cover" src="/static/uploads/{{ post.image }}" alt="">{% endif %}
+    <div class="body">{{ post.body }}</div>
+    {% if post.attachment %}
+    <a class="file-chip" href="{{ url_for('public_file', filename=post.attachment) }}" target="_blank" style="margin-top:16px">
+      {{ icons.download|safe }} دریافت فایل پیوست
+    </a>
+    {% endif %}
+  </article>
+  {% if public_comments %}
+  <section style="max-width:800px;margin:40px auto 0">
+    <h2 class="section-title" style="font-size:20px;margin-bottom:16px">نظرات ({{ comments|length }})</h2>
+    {% for c in comments %}
+    <div class="comment-card"><strong>{{ c.author_name }}</strong><small>{{ c.created_at[:16] }}</small><p>{{ c.body }}</p></div>
+    {% else %}
+    <p style="color:var(--muted);font-size:13px">هنوز نظری ثبت نشده — اولین نفر باشید.</p>
+    {% endfor %}
+    <form method="post" class="panel-card" style="margin-top:20px">
+      <h2 style="font-size:16px;margin-top:0">ارسال نظر</h2>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label>نام شما</label><input name="name" required maxlength="60" placeholder="نام"></div>
+      <div class="field"><label>متن نظر</label><textarea name="body" required maxlength="1000" placeholder="نظر شما..."></textarea></div>
+      <p style="font-size:11px;color:var(--muted)">نظر شما پس از تأیید مدیر نمایش داده می‌شود.</p>
+      <button class="btn btn-primary" type="submit">ارسال نظر</button>
+    </form>
+  </section>
+  {% endif %}
+</main>
+{{ footer|safe }}
+</body></html>

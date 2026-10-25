@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101d38">
+<title>{{ site.school_name }} | آینده از اینجا آغاز می‌شود</title>
+<script>document.documentElement.classList.add('js')</script>
+<style>{{ style|safe }}</style></head><body>
+{{ header|safe }}
+
+{% if notif_banner_items %}
+<div class="notif-banner" id="notifBanner" style="display:none">
+  <div class="container notif-banner-inner">
+    <div class="notif-bell-icon">{{ icons.bell|safe }}</div>
+    <div class="notif-banner-list">{{ notif_banner_items|safe }}</div>
+    <button class="notif-banner-close" onclick="dismissNotifBanner()" aria-label="بستن" type="button">✕</button>
+  </div>
+</div>
+{% endif %}
+
+{% set extras = [] %}
+{% if public.public_news == '1' %}
+  {% for p in posts %}{% if p.image and extras|length < 3 %}{% set _ = extras.append({'kind':'post','p':p}) %}{% endif %}{% endfor %}
+  {% for p in posts %}{% if not p.image and extras|length < 2 %}{% set _ = extras.append({'kind':'post','p':p}) %}{% endif %}{% endfor %}
+{% endif %}
+{% if public.public_announcements == '1' and announcements and extras|length < 3 %}
+  {% set _ = extras.append({'kind':'ann','a':announcements[0]}) %}
+{% endif %}
+
+<main>
+<section class="hero hero-slider" id="home" aria-roledescription="اسلایدشو" aria-label="معرفی مدرسه و آخرین مطالب">
+  <div class="slides" id="heroSlides">
+
+    {# ---------- اسلاید ۱: معرفی ---------- #}
+    <div class="slide slide-brand is-active" data-slide>
+      <div class="container hero-grid slide-pad">
+        <div>
+          <div class="eyebrow"><span class="eyebrow-dot"></span>مسیر یادگیری، رشد و موفقیت</div>
+          <h1>{{ site.hero_line1 }}<br><span class="accent">{{ site.hero_line2 }}</span><br>{{ site.hero_line3 }}</h1>
+          <p class="hero-copy">{{ site.hero_description }}</p>
+          <div class="hero-actions">
+            {% if session.get('user_id') %}
+            <a class="btn btn-primary" href="/dashboard">ورود به پنل {{ {'owner':'مدیر ارشد','admin':'مدیر عادی','teacher':'معلم','student':'دانش‌آموز','parent':'والدین'}.get(session.get('role'),'کاربری') }} {{ icons.arrow|safe }}</a>
+            {% else %}
+            <a class="btn btn-primary" href="/login">ورود / ثبت‌نام {{ icons.arrow|safe }}</a>
+            {% endif %}
+            {% if public.public_news == '1' %}<a class="btn btn-light" href="/news">مشاهده اخبار</a>{% endif %}
+          </div>
+          <div class="hero-note"><span class="note-stars">★★★★★</span>
+            <span>یادگیری هدفمند، تجربه‌ای متفاوت</span></div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="art-orbit"></div>
+          <span class="sparkle sparkle-one">✦</span><span class="sparkle sparkle-two">✧</span>
+          <div class="art-core">
+            <div class="art-cap">{{ icons.school|safe }}</div>
+            <strong>{{ site.school_name }}</strong><small>جایی برای رشد استعدادها</small>
+          </div>
+          <div class="float-card float-one">
+            <span class="float-icon fi-gold">{{ icons.star|safe }}</span>
+            <span>استعدادهای درخشان<small>هر دانش‌آموز، یک فرصت</small></span>
+          </div>
+          <div class="float-card float-two">
+            <span class="float-icon fi-cyan">{{ icons.flask|safe }}</span>
+            <span>یادگیری خلاقانه<small>از پرسش تا کشف</small></span>
+          </div>
+          <div class="float-card float-three">
+            <span class="float-icon fi-blue">{{ icons.book|safe }}</span>
+            <span>دانش و پیشرفت<small>قدم‌به‌قدم تا موفقیت</small></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ---------- اسلایدهای مطالب و اطلاعیه ---------- #}
+    {% for e in extras %}
+      {% if e.kind == 'post' %}{% set p = e.p %}
+      <div class="slide slide-media {% if not p.image %}{% if p.type == 'event' %}cover-blue{% elif p.type == 'achievement' %}cover-gold{% else %}cover-green{% endif %}{% endif %}" data-slide>
+        {% if p.image %}<img class="slide-bg" src="/static/uploads/{{ p.image }}" alt="" {% if loop.index > 1 %}loading="lazy"{% endif %}>{% endif %}
+        <div class="slide-shade"></div>
+        <div class="container slide-content">
+          <span class="slide-tag">{{ post_types[p.type] }}</span>
+          <h2>{{ p.title }}</h2>
+          <p>{{ p.body[:170] }}{% if p.body|length > 170 %}...{% endif %}</p>
+          <a class="btn btn-primary" href="/news/{{ p.id }}">ادامه مطلب {{ icons.arrow|safe }}</a>
+        </div>
+      </div>
+      {% else %}{% set a = e.a %}
+      <div class="slide slide-media slide-ann" data-slide>
+        <div class="slide-shade" style="opacity:.55"></div>
+        <div class="container slide-content">
+          <div class="slide-icon">{{ icons.bell|safe }}</div><br>
+          <span class="slide-tag">آخرین اطلاعیه</span>
+          <h2>{{ a.title }}</h2>
+          <p>{{ a.body[:170] }}{% if a.body|length > 170 %}...{% endif %}</p>
+          <a class="btn btn-primary" href="/announcements">همه اطلاعیه‌ها {{ icons.arrow|safe }}</a>
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if extras %}
+  <div class="slider-ui"><div class="slider-ui-inner">
+    <button class="slider-btn" type="button" data-s-prev aria-label="اسلاید قبلی"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" transform="scale(-1 1) translate(-24 0)"/></svg></button>
+    <div class="slider-dots" role="tablist" aria-label="انتخاب اسلاید"></div>
+    <button class="slider-btn" type="button" data-s-pause aria-label="توقف نمایش خودکار"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+    <button class="slider-btn" type="button" data-s-next aria-label="اسلاید بعدی"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6" transform="scale(-1 1) translate(-24 0)"/></svg></button>
+  </div></div>
+  <div class="slider-progress" aria-hidden="true"><i></i></div>
+  {% endif %}
+</section>
+
+<section class="quick"><div class="container quick-grid">
+  {% if session.get('user_id') %}
+  <a class="quick-card main" href="/dashboard"><span class="quick-ico">{{ icons.login|safe }}</span>
+    <span><strong>پنل من</strong><small>ادامه کار در پنل کاربری</small></span></a>
+  {% else %}
+  <a class="quick-card main" href="/login"><span class="quick-ico">{{ icons.login|safe }}</span>
+    <span><strong>ورود / ثبت‌نام</strong><small>دانش‌آموز، معلم و والدین</small></span></a>
+  {% endif %}
+  {% if public.public_news == '1' %}
+  <a class="quick-card" href="/news"><span class="quick-ico bg-blue">{{ icons.news|safe }}</span>
+    <span><strong>اخبار و رویدادها</strong><small>تازه‌ترین اتفاق‌های مدرسه</small></span></a>
+  {% endif %}
+  {% if public.public_announcements == '1' %}
+  <a class="quick-card" href="/announcements"><span class="quick-ico bg-gold">{{ icons.bell|safe }}</span>
+    <span><strong>اطلاعیه‌ها</strong><small>اعلان‌های رسمی و مهم</small></span></a>
+  {% endif %}
+  {% if public.public_contact == '1' %}
+  <a class="quick-card" href="/contact"><span class="quick-ico bg-green">{{ icons.phone|safe }}</span>
+    <span><strong>تماس با ما</strong><small>پرسش و پیشنهاد شما</small></span></a>
+  {% endif %}
+</div></section>
+
+<section class="section" id="features"><div class="container">
+  <div class="section-head reveal"><div>
+    <span class="section-kicker">یک مدرسه، فرصت‌های فراوان</span>
+    <h2 class="section-title">فضایی برای شکوفایی</h2>
+    <p class="section-desc">هر علاقه می‌تواند شروع یک مسیر تازه باشد.</p>
+  </div></div>
+  <div class="features">
+    <article class="feature reveal"><div class="feature-icon bg-blue">{{ icons.book|safe }}</div>
+      <h3>کتابخانه و مطالعه</h3><p>گسترش دانش، تقویت مهارت مطالعه و آشنایی با دنیای کتاب‌ها.</p></article>
+    <article class="feature reveal d1"><div class="feature-icon bg-green">{{ icons.flask|safe }}</div>
+      <h3>علوم و فناوری</h3><p>پرسشگری، آزمایش و آشنایی با ایده‌هایی که جهان را تغییر می‌دهند.</p></article>
+    <article class="feature reveal d2"><div class="feature-icon bg-gold">{{ icons.trophy|safe }}</div>
+      <h3>مسابقات و افتخارات</h3><p>فرصت تجربه، تلاش گروهی و نمایش توانایی‌های دانش‌آموزان.</p></article>
+    <article class="feature reveal d3"><div class="feature-icon bg-purple">{{ icons.palette|safe }}</div>
+      <h3>هنر و خلاقیت</h3><p>پرورش تخیل، بیان ایده‌ها و کشف استعدادهای هنری.</p></article>
+  </div>
+</div></section>
+
+{% if public.public_news == '1' %}
+<section class="section section-white" id="news"><div class="container">
+  <div class="carousel" data-carousel>
+    <div class="section-head reveal"><div>
+      <span class="section-kicker">همیشه به‌روز</span>
+      <h2 class="section-title">دنیای خبرهای مدرسه</h2>
+      <p class="section-desc">آخرین رویدادها و دستاوردهای مدرسه.</p>
+    </div>
+    <div class="section-head-actions">
+      <a class="text-link" href="/news">مشاهده همه {{ icons.arrow|safe }}</a>
+      <div class="carousel-nav">
+        <button type="button" data-c-prev aria-label="قبلی"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+        <button type="button" data-c-next aria-label="بعدی"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+      </div>
+    </div></div>
+    <div class="news-track" tabindex="0" aria-label="فهرست اخبار">
+    {% if posts %}{% for post in posts[:6] %}
+      <a href="/news/{{ post.id }}" class="news-card">
+        <div class="news-cover {% if not post.image %}{% if post.type == 'event' %}cover-blue{% elif post.type == 'achievement' %}cover-gold{% else %}cover-green{% endif %}{% endif %}">
+          {% if post.image %}<img src="/static/uploads/{{ post.image }}" alt="" loading="lazy">
+          {% else %}{% if post.type == 'event' %}{{ icons.calendar|safe }}{% elif post.type == 'achievement' %}{{ icons.trophy|safe }}{% else %}{{ icons.flask|safe }}{% endif %}{% endif %}
+        </div>
+        <div class="news-body">
+          <span class="news-tag">{{ post_types[post.type] }}</span>
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.body[:180] }}{% if post.body|length > 180 %}...{% endif %}</p>
+          <div class="news-meta">{{ author_html(post.creator_name, post.creator_role)|safe }}<span>{{ post.created_at[:10] }}</span></div>
+        </div>
+      </a>
+    {% endfor %}
+    {% else %}
+      <article class="news-card"><div class="news-cover cover-blue">{{ icons.calendar|safe }}</div>
+        <div class="news-body"><span class="news-tag">رویدادها</span>
+          <h3>برنامه‌ها و رویدادهای مدرسه</h3>
+          <p>در این قسمت می‌توان تاریخ برنامه‌ها، جشنواره‌ها و رویدادهای آینده را منتشر کرد.</p>
+          <div class="news-meta"><span>تقویم مدرسه</span><span>↗</span></div></div></article>
+      <article class="news-card"><div class="news-cover cover-green">{{ icons.flask|safe }}</div>
+        <div class="news-body"><span class="news-tag">آموزشی</span>
+          <h3>پروژه‌ها و فعالیت‌های علمی</h3>
+          <p>گزارش پروژه‌های آموزشی، فعالیت‌های پژوهشی و تجربه‌های دانش‌آموزان.</p>
+          <div class="news-meta"><span>فعالیت‌های علمی</span><span>↗</span></div></div></article>
+      <article class="news-card"><div class="news-cover cover-gold">{{ icons.trophy|safe }}</div>
+        <div class="news-body"><span class="news-tag">دستاوردها</span>
+          <h3>افتخارات و موفقیت‌ها</h3>
+          <p>معرفی دستاوردها و تلاش‌های دانش‌آموزان و گروه‌های مدرسه.</p>
+          <div class="news-meta"><span>افتخارات مدرسه</span><span>↗</span></div></div></article>
+    {% endif %}
+    </div>
+  </div>
+  {% if public.public_announcements == '1' %}
+  <div id="announcements" style="margin-top:20px">
+    <h2 class="section-title" style="font-size:22px;margin-bottom:14px">تابلوی اطلاعیه‌ها</h2>
+    {% for a in announcements[:3] %}
+    <div class="announcement">
+      <div class="announcement-icon">{{ icons.bell|safe }}</div>
+      <div style="flex:1">
+        <strong>{{ a.title }}</strong>
+        <div style="margin:4px 0">{{ author_html(a.creator_name, a.creator_role)|safe }}</div>
+        <small style="display:block;color:#b8a67d;font-size:11px;margin-top:2px">{{ a.created_at[:10] }}</small>
+        <p>{{ a.body[:220] }}{% if a.body|length > 220 %}...{% endif %}</p>
+        {% if a.image %}<img src="/static/uploads/{{ a.image }}" alt="">{% endif %}
+        {% if a.attachment %}<a class="file-chip" href="{{ url_for('public_file', filename=a.attachment) }}" target="_blank">{{ icons.download|safe }} دریافت فایل پیوست</a>{% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="announcement">
+      <div class="announcement-icon">{{ icons.bell|safe }}</div>
+      <div><strong>تابلوی اطلاعیه‌های مدرسه</strong>
+        <p>اطلاعیه‌های رسمی، زمان‌بندی امتحانات و اخبار جدید در این بخش نمایش داده می‌شوند.</p></div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div></section>
+{% endif %}
+
+<section class="section stats-block section-alt" style="padding-top:60px"><div class="container">
+  <div class="stats reveal"><div class="stats-inner" style="width:100%">
+    <div class="stat"><strong data-count="{{ stats.posts }}">{{ stats.posts }}</strong><span>پست منتشرشده</span></div>
+    <div class="stat"><strong data-count="{{ stats.announcements }}">{{ stats.announcements }}</strong><span>اطلاعیه</span></div>
+    <div class="stat"><strong data-count="{{ stats.students }}">{{ stats.students }}</strong><span>دانش‌آموز</span></div>
+    <div class="stat"><strong data-count="{{ stats.teachers }}">{{ stats.teachers }}</strong><span>معلم</span></div>
+  </div></div>
+</div></section>
+
+<section class="section" id="about"><div class="container">
+  <div class="about-panel reveal">
+    <div class="about-content">
+      <span class="section-kicker" style="color:#53e2d0">درباره مدرسه</span>
+      <h2 class="section-title">یادگیری، فراتر از کتاب‌های درسی</h2>
+      <p>{{ site.school_name }} در این وب‌سایت، فضایی یکپارچه برای معرفی برنامه‌ها،
+        اطلاع‌رسانی به خانواده‌ها و نمایش فعالیت‌های آموزشی و فرهنگی فراهم می‌کند.</p>
+      <div class="check-list">
+        <div class="check-item"><span class="check-circle">{{ icons.check|safe }}</span>توجه به یادگیری و پیشرفت</div>
+        <div class="check-item"><span class="check-circle">{{ icons.check|safe }}</span>حمایت از خلاقیت و پرسشگری</div>
+        <div class="check-item"><span class="check-circle">{{ icons.check|safe }}</span>ارتباط بهتر با جامعه مدرسه</div>
+      </div>
+    </div>
+    <div class="about-art"><div class="about-emblem">{{ icons.school|safe }}</div></div>
+  </div>
+</div></section>
+</main>
+{{ footer|safe }}
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var wrap = document.getElementById('heroSlides');
+  if (wrap) {
+    var slides = [].slice.call(wrap.querySelectorAll('[data-slide]'));
+    var hero = document.getElementById('home');
+    var dotsBox = hero.querySelector('.slider-dots');
+    var prog = hero.querySelector('.slider-progress');
+    var pauseBtn = hero.querySelector('[data-s-pause]');
+    var DUR = 6500, cur = 0, timer = null, userPaused = reduce, hover = false;
+    if (slides.length > 1 && dotsBox) {
+      var dots = slides.map(function(_, i){
+        var b = document.createElement('button');
+        b.type = 'button'; b.setAttribute('role','tab');
+        b.setAttribute('aria-label','اسلاید ' + (i+1));
+        b.addEventListener('click', function(){ go(i, true); });
+        dotsBox.appendChild(b); return b;
+      });
+      function restartProgress(){
+        if (!prog) return;
+        var bar = prog.firstElementChild;
+        prog.classList.remove('run'); void bar.offsetWidth;
+        if (!userPaused) { prog.style.setProperty('--dur', DUR + 'ms'); prog.classList.add('run'); }
+      }
+      function schedule(){
+        clearTimeout(timer);
+        if (userPaused || hover || document.hidden) return;
+        timer = setTimeout(function(){ go(cur + 1); }, DUR);
+      }
+      function go(n, manual){
+        cur = (n + slides.length) % slides.length;
+        slides.forEach(function(s, i){
+          s.classList.toggle('is-active', i === cur);
+          s.setAttribute('aria-hidden', i === cur ? 'false' : 'true');
+        });
+        dots.forEach(function(d, i){
+          d.classList.toggle('on', i === cur);
+          d.setAttribute('aria-selected', i === cur ? 'true' : 'false');
+        });
+        restartProgress(); schedule();
+      }
+      hero.querySelector('[data-s-next]').addEventListener('click', function(){ go(cur + 1, true); });
+      hero.querySelector('[data-s-prev]').addEventListener('click', function(){ go(cur - 1, true); });
+      function setPaused(p){
+        userPaused = p;
+        pauseBtn.setAttribute('aria-label', p ? 'پخش خودکار اسلایدها' : 'توقف نمایش خودکار');
+        pauseBtn.innerHTML = p
+          ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+        restartProgress(); schedule();
+      }
+      pauseBtn.addEventListener('click', function(){ setPaused(!userPaused); });
+      hero.addEventListener('mouseenter', function(){ hover = true; clearTimeout(timer); if (prog) prog.classList.add('paused'); });
+      hero.addEventListener('mouseleave', function(){ hover = false; if (prog) prog.classList.remove('paused'); restartProgress(); schedule(); });
+      hero.addEventListener('keydown', function(e){
+        if (e.key === 'ArrowLeft') go(cur + 1, true);
+        if (e.key === 'ArrowRight') go(cur - 1, true);
+      });
+      var sx = 0, sy = 0;
+      wrap.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+      wrap.addEventListener('touchend', function(e){
+        var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? cur + 1 : cur - 1, true);
+      }, {passive:true});
+      document.addEventListener('visibilitychange', function(){ if (document.hidden) clearTimeout(timer); else { restartProgress(); schedule(); } });
+      if (reduce) setPaused(true);
+      go(0);
+    }
+  }
+
+  document.querySelectorAll('[data-carousel]').forEach(function(box){
+    var track = box.querySelector('.news-track');
+    var prev = box.querySelector('[data-c-prev]'), next = box.querySelector('[data-c-next]');
+    function step(){ var c = track.querySelector('.news-card'); return c ? c.getBoundingClientRect().width + 18 : 300; }
+    function upd(){
+      var max = track.scrollWidth - track.clientWidth, pos = Math.abs(track.scrollLeft);
+      box.classList.toggle('no-scroll', max <= 10);
+      prev.disabled = pos <= 10; next.disabled = pos >= max - 10;
+    }
+    next.addEventListener('click', function(){ track.scrollBy({left: -step(), behavior: reduce ? 'auto' : 'smooth'}); });
+    prev.addEventListener('click', function(){ track.scrollBy({left: step(), behavior: reduce ? 'auto' : 'smooth'}); });
+    track.addEventListener('scroll', function(){ window.requestAnimationFrame(upd); }, {passive:true});
+    window.addEventListener('resize', upd); upd();
+  });
+
+  var items = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, {threshold: .12, rootMargin: '0px 0px -40px 0px'});
+    items.forEach(function(el){ io.observe(el); });
+  } else { items.forEach(function(el){ el.classList.add('in'); }); }
+
+  var nums = document.querySelectorAll('[data-count]');
+  if ('IntersectionObserver' in window && !reduce) {
+    var co = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return; co.unobserve(e.target);
+        var el = e.target, end = parseInt(el.getAttribute('data-count'), 10) || 0, t0 = null;
+        if (end === 0) return;
+        function tick(t){ if (!t0) t0 = t; var p = Math.min((t - t0) / 1100, 1);
+          el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3)));
+          if (p < 1) requestAnimationFrame(tick); else el.textContent = end; }
+        requestAnimationFrame(tick);
+      });
+    }, {threshold: .6});
+    nums.forEach(function(n){ co.observe(n); });
+  }
+})();
+</script>
+</body></html>

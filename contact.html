@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تماس با ما | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+{{ header|safe }}
+<main class="container" style="padding:50px 0;min-height:60vh">
+  <div style="margin-bottom:20px;text-align:center">
+    <span class="section-kicker">تماس با ما</span>
+    <h1 class="section-title">در ارتباط باشید</h1>
+    <p class="section-desc">سؤال، پیشنهاد یا انتقاد خود را برای ما ارسال کنید.</p>
+  </div>
+  <div class="panel-grid" style="max-width:900px;margin:0 auto">
+    <div class="panel-card">
+      <h2>{{ icons.mail|safe }} ارسال پیام</h2>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field"><label>نام شما</label><input name="name" required maxlength="60" placeholder="نام"></div>
+        <div class="field"><label>ایمیل یا تلفن (اختیاری)</label><input name="contact" maxlength="100" placeholder="برای پاسخ‌دهی"></div>
+        <div class="field"><label>پیام</label><textarea name="body" required maxlength="2000" placeholder="پیام خود را بنویسید..."></textarea></div>
+        <button class="btn btn-primary" type="submit">ارسال پیام</button>
+      </form>
+    </div>
+    <div class="panel-card">
+      <h2>{{ icons.phone|safe }} اطلاعات تماس</h2>
+      <div style="display:grid;gap:14px;font-size:13px">
+        {% if contact_info.contact_phone %}<div><strong style="color:var(--muted);font-size:11px;display:block">تلفن</strong>{{ contact_info.contact_phone }}</div>{% endif %}
+        {% if contact_info.contact_email %}<div><strong style="color:var(--muted);font-size:11px;display:block">ایمیل</strong>{{ contact_info.contact_email }}</div>{% endif %}
+        {% if contact_info.contact_address %}<div><strong style="color:var(--muted);font-size:11px;display:block">آدرس</strong>{{ contact_info.contact_address }}</div>{% endif %}
+        {% if not (contact_info.contact_phone or contact_info.contact_email or contact_info.contact_address) %}
+        <p style="color:var(--muted)">اطلاعات تماس هنوز تنظیم نشده است.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</main>
+{{ footer|safe }}
+</body></html>

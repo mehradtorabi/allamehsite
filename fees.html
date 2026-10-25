@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>شهریه و اقساط | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+<header class="nav-wrap"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{% if site_logo %}<img src="/static/uploads/{{ site_logo }}" alt="">{% else %}{{ icons.school|safe }}{% endif %}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <div class="panel-nav">
+    <a href="/dashboard" class="btn btn-light">بازگشت به پنل</a>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">خروج</button>
+    </form>
+  </div>
+</div></header>
+
+<main class="container panel-wrap">
+<section class="panel-heading">
+  <div><h1>شهریه و اقساط</h1><p>ثبت و مشاهده وضعیت پرداخت دانش‌آموزان</p></div>
+  <span class="badge-role">{{ icons.book|safe }} مالی</span>
+</section>
+
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+  <div class="notice notice-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+{% endfor %}
+
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.plus|safe }} ثبت شهریه / قسط</h2>
+  <form method="post" class="panel-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="panel-grid">
+      <select name="student_id" required>
+        <option value="">— دانش‌آموز —</option>
+        {% for s in students %}<option value="{{ s.id }}">{{ s.full_name }} — {{ s.class_name }}</option>{% endfor %}
+      </select>
+      <input name="title" required maxlength="160" placeholder="عنوان شهریه / قسط">
+      <input type="number" name="amount" min="0" required placeholder="مبلغ کل (تومان)">
+      <input type="number" name="paid_amount" min="0" value="0" required placeholder="مبلغ پرداخت‌شده">
+      <input type="date" name="due_date">
+      <input name="note" maxlength="1000" placeholder="توضیح">
+    </div>
+    <button class="btn btn-primary" type="submit">ثبت در دیتابیس</button>
+  </form>
+</section>
+
+<section class="panel-card full">
+  <h2>{{ icons.book|safe }} سوابق پرداخت</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>دانش‌آموز</th><th>عنوان</th><th>کل</th><th>پرداختی</th><th>مانده</th><th>سررسید</th><th>وضعیت</th><th>کارنامه</th></tr>
+      {% for f in fees %}
+      <tr>
+        <td>{{ f.student_name }}</td><td>{{ f.title }}</td>
+        <td>{{ "{:,}".format(f.amount) }}</td>
+        <td>{{ "{:,}".format(f.paid_amount) }}</td>
+        <td>{{ "{:,}".format(f.amount-f.paid_amount) }}</td>
+        <td>{{ f.due_date or '—' }}</td>
+        <td>
+          {% if f.status=='paid' %}<span class="badge badge-student">تسویه</span>
+          {% elif f.status=='partial' %}<span class="badge badge-pending">بخشی</span>
+          {% else %}<span class="badge badge-off">پرداخت نشده</span>{% endif %}
+        </td>
+        <td><a href="{{ url_for('report_card', student_id=f.student_id) }}">مشاهده/چاپ</a></td>
+      </tr>
+      {% else %}<tr><td colspan="8" class="empty">رکوردی وجود ندارد.</td></tr>{% endfor %}
+    </table>
+  </div>
+</section>
+</main>
+</body></html>

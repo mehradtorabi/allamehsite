@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اخبار و رویدادها | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+{{ header|safe }}
+<section class="page-hero">
+  <div class="container page-hero-inner">
+    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+      <div class="page-hero-icon">{{ icons.news|safe }}</div>
+      <div><h1>اخبار و رویدادهای مدرسه</h1><p>آخرین اتفاقات، دستاوردها و رویدادها</p></div>
+    </div>
+    <div class="page-hero-stats">
+      <div class="hs"><strong>{{ stats.total }}</strong><span>پست</span></div>
+      {% for k, v in type_stats.items() %}{% if v %}<div class="hs"><strong>{{ v }}</strong><span>{{ post_types[k] }}</span></div>{% endif %}{% endfor %}
+    </div>
+  </div>
+</section>
+<main class="container" style="padding:0 0 60px;min-height:50vh">
+  <div class="news-tabs" style="display:flex;gap:6px;margin-bottom:24px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow-x:auto">
+    <a href="/news" class="btn btn-light {% if not ptype and not query %}active{% endif %}" style="padding:10px 20px;border-radius:10px;{% if not ptype and not query %}background:var(--blue);color:#fff{% endif %}">همه ({{ stats.total }})</a>
+    {% for k, v in post_types.items() %}
+    <a href="/news?type={{ k }}" class="btn btn-light" style="padding:10px 20px;border-radius:10px;{% if ptype == k %}background:var(--blue);color:#fff{% endif %}">{{ v }} ({{ type_stats[k] }})</a>
+    {% endfor %}
+  </div>
+  <div class="filter-bar">
+    <form method="get">
+      <input type="text" name="q" value="{{ query }}" placeholder="جستجو در عنوان و متن...">
+      {% if ptype %}<input type="hidden" name="type" value="{{ ptype }}">{% endif %}
+      <button class="btn btn-primary" type="submit">{{ icons.search|safe }} جستجو</button>
+    </form>
+  </div>
+  {% if featured and not query %}
+  <a href="/news/{{ featured.id }}" class="news-featured" style="display:grid;grid-template-columns:1.1fr 1fr;background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;margin-bottom:30px">
+    <div style="position:relative;min-height:320px;background:linear-gradient(135deg,var(--blue),#6e91f2);overflow:hidden">
+      {% if featured.image %}<img src="/static/uploads/{{ featured.image }}" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+      {% else %}<div style="position:absolute;inset:0;display:grid;place-items:center;color:white;opacity:.4">{% if featured.type == 'event' %}{{ icons.calendar|safe }}{% elif featured.type == 'achievement' %}{{ icons.trophy|safe }}{% else %}{{ icons.news|safe }}{% endif %}</div>
+      {% endif %}
+      <span style="position:absolute;top:16px;right:16px;background:var(--gold);color:#7a4a00;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:800;z-index:2">⭐ پست ویژه</span>
+    </div>
+    <div style="padding:32px;display:flex;flex-direction:column;justify-content:center">
+      <span class="post-type-badge pt-{{ featured.type }}" style="font-size:11px;padding:4px 14px;margin-bottom:12px">{{ post_types[featured.type] }}</span>
+      <h2 style="margin:0 0 12px;font-size:24px;color:var(--navy)">{{ featured.title }}</h2>
+      <p style="margin:0 0 18px;color:var(--muted);font-size:13px;line-height:2">{{ featured.body[:220] }}{% if featured.body|length > 220 %}...{% endif %}</p>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);border-top:1px solid #f1f5f9;padding-top:14px;align-items:center">
+        {{ author_html(featured.creator_name, featured.creator_role)|safe }}
+        <span>{{ icons.calendar|safe }} {{ featured.created_at[:10] }}</span>
+        {% if featured.attachment %}<a class="file-chip" href="{{ url_for('public_file', filename=featured.attachment) }}" target="_blank">{{ icons.download|safe }} فایل پیوست</a>{% endif %}
+      </div>
+    </div>
+  </a>
+  {% endif %}
+  {% if posts %}
+  <div class="news-grid-lg" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+    {% for post in posts %}
+    <a href="/news/{{ post.id }}" class="news-card-lg" style="background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column">
+      <div style="position:relative;min-height:180px;background:linear-gradient(135deg,var(--blue),#6e91f2);display:grid;place-items:center">
+        <span style="position:absolute;top:12px;right:12px;padding:4px 12px;border-radius:14px;font-size:10px;font-weight:700;background:rgba(255,255,255,.95);color:var(--navy);z-index:2">{{ post_types[post.type] }}</span>
+        {% if post.image %}<img src="/static/uploads/{{ post.image }}" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+        {% else %}<div style="color:white;opacity:.5;position:relative;z-index:1">{% if post.type == 'event' %}{{ icons.calendar|safe }}{% elif post.type == 'achievement' %}{{ icons.trophy|safe }}{% else %}{{ icons.news|safe }}{% endif %}</div>
+        {% endif %}
+      </div>
+      <div style="padding:18px;display:flex;flex-direction:column;flex:1">
+        <h3 style="margin:0 0 8px;font-size:15px;color:var(--navy)">{{ post.title }}</h3>
+        <p style="margin:0 0 14px;color:var(--muted);font-size:12px;flex:1">{{ post.body[:140] }}{% if post.body|length > 140 %}...{% endif %}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f1f5f9;padding-top:12px;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:6px">
+          {{ author_html(post.creator_name, post.creator_role)|safe }}
+          <span>{{ post.created_at[:10] }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">{{ icons.news|safe }}</div>
+    <h3>پستی یافت نشد</h3>
+    <p>هیچ پستی با این مشخصات پیدا نشد.</p>
+    <a href="/news" class="btn btn-light">مشاهده همه</a>
+  </div>
+  {% endif %}
+</main>
+{{ footer|safe }}
+</body></html>

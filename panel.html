@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page_title }} | {{ site_name }}</title>
+<style>{{ style|safe }}
+{% if panel_accent %}:root{--blue:{{ panel_accent }} !important}{% endif %}
+.panel-heading .badge-role{background:#fff!important;color:var(--blue)!important;
+ border:1px solid #c7d8ff!important;box-shadow:0 6px 18px rgba(36,88,211,.14)!important;font-weight:850!important}
+.badge-pagination{display:flex;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap}
+.badge-pagination a,.badge-pagination span{display:inline-flex;align-items:center;
+ justify-content:center;min-width:34px;height:34px;padding:0 10px;border:1px solid #dce5f5;
+ border-radius:10px;background:#fff;color:#3c5277;font-size:12px;font-weight:800}
+.badge-pagination a:hover{background:#edf4ff;border-color:#a9c2fa}
+.badge-pagination .current{background:var(--blue);color:#fff;border-color:var(--blue)}
+</style></head><body>
+<header class="nav-wrap"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{% if site_logo %}<img src="/static/uploads/{{ site_logo }}" alt="">{% else %}{{ icons.school|safe }}{% endif %}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <div class="panel-nav">
+    <a href="/" class="btn btn-light">صفحه سایت</a>
+    <a href="/account" class="btn btn-light">{{ icons.key|safe }} تغییر رمز</a>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">خروج</button>
+    </form>
+  </div>
+</div></header>
+
+<main class="container panel-wrap">
+<section class="panel-heading">
+  <div><h1>{{ page_title }}</h1><p>سلام {{ user.full_name }}</p></div>
+  <span class="badge-role">
+    {% if user.role == 'owner' %}{{ icons.crown|safe }} مدیر ارشد
+    {% elif user.role == 'admin' %}مدیر
+    {% elif user.role == 'teacher' %}معلم
+    {% elif user.role == 'parent' %}والدین
+    {% else %}دانش‌آموز{% endif %}
+  </span>
+</section>
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+  <div class="notice notice-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+{% endfor %}
+
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>دسترسی‌های آموزشی</h2>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="btn btn-light" href="{{ url_for('academics_portal') }}">برنامه و نتایج امتحانات</a>
+    {% if user.role in ('owner','admin') %}<a class="btn btn-light" href="{{ url_for('manage_fees') }}">شهریه و اقساط</a>{% endif %}
+    {% if user.role in ('teacher','admin','owner') %}<a class="btn btn-light" href="{{ url_for('homework_submissions') }}">پاسخ‌های تکالیف</a>{% endif %}
+    {% if user.role == 'teacher' %}<a class="btn btn-light" href="{{ url_for('teacher_parent_messages') }}">پیام‌های والدین</a>{% endif %}
+  </div>
+</section>
+
+{% if user.role != 'owner' %}
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.palette|safe }} شخصی‌سازی پنل</h2>
+  <p class="help-text" style="margin-bottom:10px">رنگ تاکیدی پنل خود را انتخاب کنید.</p>
+  <form method="post" action="{{ url_for('save_panel_theme') }}" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="color" name="panel_accent" value="{{ panel_accent or '#2458d3' }}" style="width:60px;height:44px;border-radius:10px;border:1px solid var(--line);cursor:pointer">
+    <button class="btn btn-primary" type="submit">ذخیرهٔ رنگ پنل</button>
+    {% if panel_accent %}<span style="font-size:12px;color:var(--muted)">رنگ فعلی: {{ panel_accent }}</span>{% endif %}
+  </form>
+</section>
+{% endif %}
+
+{% if user.role in ('owner', 'admin') %}
+{% set is_owner = user.role == 'owner' %}
+
+{% if is_owner %}
+<div class="tips-box">
+  <strong>{{ icons.crown|safe }} مدیر ارشد:</strong>
+  دسترسی کامل — ظاهر، اطلاعات، کدها، محتوا، نظرات، پیام‌ها، کاربران، گزارش فعالیت، آمار سیستم.
+</div>
+{% else %}
+<div class="tips-box">
+  <strong>مدیر:</strong>
+  انتشار اخبار، اطلاعیه، تأیید کاربران و نظرات، مشاهده پیام‌ها.
+</div>
+{% endif %}
+
+{% if is_owner %}
+<section class="panel-card full" style="margin-bottom:18px">
+  <h2>{{ icons.star|safe }} آمار سیستم</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+    <div class="stat-box" style="background:linear-gradient(135deg,#e8efff,#fff);border:1px solid #c7d8ff;border-radius:14px;padding:14px;text-align:center">
+      <strong style="display:block;font-size:24px;color:var(--blue)">{{ users_total }}</strong>
+      <span style="font-size:11px;color:var(--muted)">کل کاربران</span>
+    </div>
+    <div class="stat-box" style="background:linear-gradient(135deg,#dffaf3,#fff);border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center">
+      <strong style="display:block;font-size:24px;color:#047857">{{ pending_users|length }}</strong>
+      <span style="font-size:11px;color:var(--muted)">در انتظار تأیید</span>
+    </div>
+    <div class="stat-box" style="background:linear-gradient(135deg,#fff2d8,#fff);border:1px solid #f5d58a;border-radius:14px;padding:14px;text-align:center">
+      <strong style="display:block;font-size:24px;color:#a86400">{{ pending_comments|length }}</strong>
+      <span style="font-size:11px;color:var(--muted)">نظر در انتظار</span>
+    </div>
+    <div class="stat-box" style="background:linear-gradient(135deg,#f0e8ff,#fff);border:1px solid #d8c7f5;border-radius:14px;padding:14px;text-align:center">
+      <strong style="display:block;font-size:24px;color:#6b3fbb">{{ contact_messages|length }}</strong>
+      <span style="font-size:11px;color:var(--muted)">پیام تماس</span>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if pending_users %}
+<section class="panel-card full" style="margin-bottom:18px;border-color:#f5d58a;background:#fffbeb">
+  <h2 style="color:#78350f">{{ icons.bell|safe }} کاربران در انتظار تأیید ({{ pending_users|length }})</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>نام</th><th>نام کاربری</th><th>نقش</th><th>کلاس</th><th>تاریخ</th><th>عملیات</th></tr>
+      {% for u in pending_users %}
+      <tr>
+        <td>{{ u.full_name }}</td>
+        <td><code>{{ u.username }}</code></td>
+        <td>
+          {% if u.role == 'admin' %}<span class="badge badge-admin">مدیر</span>
+          {% elif u.role == 'teacher' %}<span class="badge badge-teacher">معلم</span>
+          {% elif u.role == 'parent' %}<span class="badge badge-student">والدین</span>
+          {% else %}<span class="badge badge-student">دانش‌آموز</span>{% endif %}
+        </td>
+        <td>{{ u.class_name or '—' }}</td>
+        <td style="font-size:11px;color:var(--muted)">{{ u.created_at[:10] }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin_approve_user', uid=u.id) }}" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-success btn-tiny" type="submit">✓ تأیید</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_reject_user', uid=u.id) }}" class="inline-form" onsubmit="return confirm('رد شود؟')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-danger btn-tiny" type="submit">✕ رد</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if is_owner %}
+<section class="panel-card full">
+  <h2>{{ icons.palette|safe }} ظاهر و رنگ‌بندی سایت</h2>
+  <form class="panel-form" method="post" action="{{ url_for('owner_save_appearance') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="panel-grid" style="gap:14px">
+      {% for key, label, desc, default in [
+        ('style_primary','۱. رنگ اصلی (Primary)','دکمه‌ها، لینک‌ها، تاکیدها', '#2458d3'),
+        ('style_accent','۲. رنگ تاکیدی (Accent)','آیکون‌های روشن، نقطه‌ها', '#28d6c2'),
+        ('style_navy','۳. رنگ سرمه‌ای (Navy)','هدر، فوتر، تیترها', '#101d38'),
+        ('style_gold','۴. رنگ طلایی (Gold)','تزئینات، برچسب ویژه', '#ffc96b')
+      ] %}
+      <div class="field" style="margin:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <label style="margin:0">{{ label }}</label>
+          <span class="hex-label">{{ (appearance[key] or default)|upper }}</span>
+        </div>
+        <input type="color" name="{{ key }}" value="{{ appearance[key] or default }}">
+        <div style="height:32px;border-radius:8px;margin-top:6px;background:{{ appearance[key] or default }};border:1px solid var(--line)"></div>
+        <div class="color-usage"><strong>کاربرد:</strong> {{ desc }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="field" style="margin-top:16px">
+      <label>لوگوی سایت</label>
+      <input type="file" name="site_logo" accept="image/*">
+      {% if appearance.site_logo %}
+      <div style="margin-top:8px">
+        <img src="/static/uploads/{{ appearance.site_logo }}" style="max-height:60px;border-radius:8px;border:1px solid var(--line);padding:4px;background:#fff">
+        <label style="font-size:12px;color:#a12d28;margin-top:6px;display:flex;align-items:center;gap:4px">
+          <input type="checkbox" name="remove_logo" value="1"> حذف لوگوی فعلی
+        </label>
+      </div>
+      {% endif %}
+    </div>
+    <button class="btn btn-primary" type="submit" style="margin-top:8px">ذخیره ظاهر</button>
+  </form>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.settings|safe }} اطلاعات مدرسه</h2>
+  <form class="panel-form" method="post" action="{{ url_for('owner_save_site') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field"><label>نام مدرسه</label><input name="school_name" value="{{ site.school_name }}" required maxlength="80"></div>
+    <div class="panel-grid" style="gap:12px">
+      <div class="field"><label>خط اول</label><input name="hero_line1" value="{{ site.hero_line1 }}" required maxlength="80"></div>
+      <div class="field"><label>خط دوم</label><input name="hero_line2" value="{{ site.hero_line2 }}" required maxlength="80"></div>
+      <div class="field"><label>خط سوم</label><input name="hero_line3" value="{{ site.hero_line3 }}" required maxlength="80"></div>
+    </div>
+    <div class="field"><label>توضیح صفحه اصلی</label><textarea name="hero_description" required maxlength="500">{{ site.hero_description }}</textarea></div>
+    <button class="btn btn-primary" type="submit">ذخیره</button>
+  </form>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.phone|safe }} اطلاعات تماس و فوتر</h2>
+  <form class="panel-form" method="post" action="{{ url_for('owner_save_contact') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="panel-grid" style="gap:12px">
+      <input name="contact_phone" value="{{ contact.contact_phone }}" maxlength="40" placeholder="تلفن">
+      <input name="contact_email" value="{{ contact.contact_email }}" maxlength="80" placeholder="ایمیل">
+    </div>
+    <input name="contact_address" value="{{ contact.contact_address }}" maxlength="200" placeholder="آدرس">
+    <textarea name="footer_text" maxlength="300" placeholder="متن فوتر">{{ contact.footer_text }}</textarea>
+    <button class="btn btn-primary" type="submit">ذخیره اطلاعات تماس</button>
+  </form>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.bell|safe }} کنترل بخش‌های عمومی</h2>
+  <form class="panel-form" method="post" action="{{ url_for('owner_save_toggles') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% for k, label in [('public_news','اخبار و رویدادها (/news)'),
+                        ('public_announcements','اطلاعیه‌ها (/announcements)'),
+                        ('public_comments','اجازهٔ ثبت نظر'),
+                        ('public_contact','صفحهٔ تماس (/contact)')] %}
+    <label style="display:flex;align-items:center;gap:8px;padding:10px;background:#f7f9fd;border-radius:10px">
+      <input type="checkbox" name="{{ k }}" value="1" {% if public[k] == '1' %}checked{% endif %}>
+      {{ label }}
+    </label>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">ذخیره تنظیمات</button>
+  </form>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.key|safe }} کدهای ثبت‌نام</h2>
+  <div class="panel-grid">
+    {% for k, label, route in [
+      ('teacher','کد معلم','admin_regen_teacher_code'),
+      ('student','کد دانش‌آموز','admin_regen_student_code'),
+      ('parent','کد والدین','admin_regen_parent_code'),
+      ('admin','کد مدیر عادی','admin_regen_admin_code')
+    ] %}
+    <div>
+      <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted)">{{ label }}</h3>
+      <div class="code-box">{{ {'teacher':teacher_code,'student':student_code,'parent':parent_code,'admin':admin_code}[k] }}</div>
+      <form method="post" action="{{ url_for(route) }}" style="margin-top:8px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-light btn-tiny">تولید کد جدید</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.plus|safe }} ایجاد پست جدید
+    <span class="sub">همهٔ فایل‌های PDF، Word، Excel، PowerPoint پذیرفته می‌شوند.</span>
+  </h2>
+  <form class="panel-form" method="post" action="{{ url_for('admin_add_post') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="type" required>
+      {% if is_owner %}<option value="event">رویداد</option><option value="achievement">دستاورد</option>{% endif %}
+      <option value="news">خبر</option>
+    </select>
+    <input name="title" required maxlength="160" placeholder="عنوان">
+    <textarea name="body" required maxlength="5000" placeholder="متن پست"></textarea>
+    <input type="file" name="image" accept="image/*">
+    <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.odt,.ods,.odp">
+    <button class="btn btn-primary" type="submit">انتشار پست</button>
+  </form>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.news|safe }} پست‌های سایت</h2>
+  <div class="panel-list">
+    {% for p in posts %}
+    <li>
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <span class="post-type-badge pt-{{ p.type }}">{{ post_types[p.type] }}</span>
+          <strong>{{ p.title }}</strong>
+          <div style="margin:4px 0">{{ author_html(p.creator_name, p.creator_role)|safe }}</div>
+          <small>{{ p.created_at }}</small>
+          <p style="margin:8px 0 0;font-size:12px">{{ p.body[:200] }}{% if p.body|length > 200 %}...{% endif %}</p>
+          {% if p.image %}<img class="thumb" src="/static/uploads/{{ p.image }}" alt="">{% endif %}
+          {% if p.attachment %}
+          <a class="file-chip" href="{{ url_for('public_file', filename=p.attachment) }}" target="_blank">{{ icons.download|safe }} فایل پیوست</a>
+          {% endif %}
+        </div>
+        <div style="display:flex;gap:6px;flex-direction:column">
+          {% if is_owner or p.created_by == user.user_id %}
+          <form method="post" action="{{ url_for('admin_delete_post', pid=p.id) }}" onsubmit="return confirm('حذف؟')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-danger btn-tiny">حذف</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </li>
+    {% else %}<li class="empty">هنوز پستی ثبت نشده.</li>{% endfor %}
+  </div>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.bell|safe }} اطلاعیه‌ها</h2>
+  <form class="panel-form" method="post" action="{{ url_for('admin_add_announcement') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input name="title" required maxlength="160" placeholder="عنوان">
+    <textarea name="body" required maxlength="5000" placeholder="متن"></textarea>
+    <input type="file" name="image" accept="image/*">
+    <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.odt,.ods,.odp">
+    <label style="display:flex;align-items:center;gap:8px;padding:10px;background:#fffbeb;border:1px solid #f5d58a;border-radius:10px;font-size:12px;color:#7a4a00">
+      <input type="checkbox" name="is_pinned" value="1"> 📌 سنجاق‌کردن
+    </label>
+    <button class="btn btn-primary" type="submit">انتشار</button>
+  </form>
+  <div class="panel-list" style="margin-top:16px">
+    {% for a in announcements %}
+    <li>
+      <strong>{% if a.is_pinned %}📌 {% endif %}{{ a.title }}</strong>
+      <div style="margin:4px 0">{{ author_html(a.creator_name, a.creator_role)|safe }}</div>
+      <small>{{ a.created_at }}</small>
+      <div style="margin-top:6px;font-size:12px">{{ a.body }}</div>
+      {% if a.image %}<img class="thumb" src="/static/uploads/{{ a.image }}" alt="">{% endif %}
+      {% if a.attachment %}
+      <a class="file-chip" href="{{ url_for('public_file', filename=a.attachment) }}" target="_blank">{{ icons.download|safe }} فایل پیوست</a>
+      {% endif %}
+      {% if is_owner or a.created_by == user.user_id %}
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <form method="post" action="{{ url_for('admin_toggle_ann_pin', aid=a.id) }}" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-light btn-tiny">{% if a.is_pinned %}برداشتن سنجاق{% else %}📌 سنجاق{% endif %}</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_delete_announcement', aid=a.id) }}" class="inline-form" onsubmit="return confirm('حذف؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-danger btn-tiny">حذف</button>
+        </form>
+      </div>
+      {% endif %}
+    </li>
+    {% else %}<li class="empty">اطلاعیه‌ای نیست.</li>{% endfor %}
+  </div>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.comment|safe }} نظرات کاربران</h2>
+  {% if pending_comments %}
+  <h3 style="font-size:14px;color:#d97706;margin:8px 0">در انتظار تأیید ({{ pending_comments|length }})</h3>
+  <div class="panel-list">
+    {% for c in pending_comments %}
+    <li>
+      <strong>{{ c.author_name }}</strong> روی "<a href="/news/{{ c.post_id }}" target="_blank" style="color:var(--blue)">{{ c.post_title }}</a>"
+      <small>{{ c.created_at }}</small>
+      <p style="margin:6px 0">{{ c.body }}</p>
+      <form method="post" action="{{ url_for('admin_approve_comment', cid=c.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-primary btn-tiny">تأیید</button>
+      </form>
+      <form method="post" action="{{ url_for('admin_delete_comment', cid=c.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger btn-tiny">حذف</button>
+      </form>
+    </li>
+    {% endfor %}
+  </div>
+  {% else %}<p style="color:var(--muted);font-size:13px">نظر جدیدی در انتظار تأیید نیست.</p>{% endif %}
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.mail|safe }} پیام‌های تماس</h2>
+  <div class="panel-list">
+    {% for m in contact_messages[:10] %}
+    <li>
+      <strong>{{ m.name }}</strong>
+      {% if m.contact %}<small style="color:var(--blue)">{{ m.contact }}</small>{% endif %}
+      <small>{{ m.created_at }}</small>
+      <p style="margin:6px 0">{{ m.body }}</p>
+      <form method="post" action="{{ url_for('admin_delete_message', mid=m.id) }}" class="inline-form" onsubmit="return confirm('حذف؟')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger btn-tiny">حذف</button>
+      </form>
+    </li>
+    {% else %}<li class="empty">پیامی دریافت نشده.</li>{% endfor %}
+  </div>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.plus|safe }} ایجاد کاربر</h2>
+  <form class="panel-form" method="post" action="{{ url_for('admin_add_user') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="role" required>
+      <option value="teacher">معلم</option>
+      <option value="student">دانش‌آموز</option>
+      {% if is_owner %}<option value="admin">مدیر عادی</option>{% endif %}
+    </select>
+    <input name="full_name" required maxlength="80" placeholder="نام و نام خانوادگی">
+    <input name="username" required maxlength="40" pattern="[a-zA-Z0-9_.-]{3,40}" placeholder="نام کاربری (لاتین)">
+    <input name="password" type="password" required minlength="8" maxlength="128" placeholder="رمز عبور">
+    <select name="class_name">
+      <option value="">— کلاس (الزامی برای دانش‌آموز) —</option>
+      {% for c in classes %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-primary" type="submit">ایجاد حساب</button>
+  </form>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.users|safe }} کاربران فعال
+    <span class="sub">مجموع: {{ users_total }} کاربر — صفحه {{ users_page }} از {{ users_pages }}</span>
+  </h2>
+  <div class="sort-bar">
+    {{ icons.sort|safe }}
+    <a href="?sort=role&users_page=1" class="{% if sort == 'role' %}active{% endif %}">نقش</a>
+    <a href="?sort=name&users_page=1" class="{% if sort == 'name' %}active{% endif %}">نام</a>
+    <a href="?sort=class&users_page=1" class="{% if sort == 'class' %}active{% endif %}">کلاس</a>
+    <a href="?sort=date&users_page=1" class="{% if sort == 'date' %}active{% endif %}">جدیدترین</a>
+  </div>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>نام</th><th>نام کاربری</th><th>نقش</th><th>کلاس</th><th>وضعیت</th><th>عملیات</th></tr>
+      {% for u in users %}
+      {% if u.is_active %}
+      <tr>
+        <td>{{ u.full_name }}</td>
+        <td><code>{{ u.username }}</code></td>
+        <td>
+          {% if u.role == 'owner' %}<span class="badge badge-owner">{{ icons.crown|safe }} مدیر ارشد</span>
+          {% elif u.role == 'admin' %}<span class="badge badge-admin">مدیر</span>
+          {% elif u.role == 'teacher' %}<span class="badge badge-teacher">معلم</span>
+          {% elif u.role == 'parent' %}<span class="badge badge-student">والدین</span>
+          {% else %}<span class="badge badge-student">دانش‌آموز</span>{% endif %}
+        </td>
+        <td>{{ u.class_name or '—' }}</td>
+        <td><span class="badge badge-student">فعال</span></td>
+        <td>
+          {% if u.role == 'owner' %}<span style="font-size:11px;color:#a86400">محافظت‌شده</span>
+          {% elif u.id == user.user_id %}<span style="font-size:11px;color:var(--muted)">خودتان</span>
+          {% elif not is_owner and u.role == 'admin' %}<span style="font-size:11px;color:var(--muted)">فقط مدیر ارشد</span>
+          {% else %}
+          <form method="post" action="{{ url_for('admin_toggle_user', uid=u.id) }}" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-light btn-tiny">غیرفعال</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_delete_user', uid=u.id) }}" class="inline-form" onsubmit="return confirm('حذف؟')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-danger btn-tiny">{{ icons.trash|safe }}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </table>
+  </div>
+  {% if users_pages > 1 %}
+  <div class="badge-pagination">
+    {% if users_page > 1 %}<a href="?sort={{ sort }}&users_page={{ users_page - 1 }}">‹</a>{% endif %}
+    {% for p in range(1, users_pages + 1) %}
+      {% if p == users_page %}<span class="current">{{ p }}</span>
+      {% elif p <= 3 or p > users_pages - 3 or (p >= users_page - 1 and p <= users_page + 1) %}
+        <a href="?sort={{ sort }}&users_page={{ p }}">{{ p }}</a>
+      {% elif p == 4 or p == users_pages - 3 %}<span>…</span>{% endif %}
+    {% endfor %}
+    {% if users_page < users_pages %}<a href="?sort={{ sort }}&users_page={{ users_page + 1 }}">›</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+
+{% if is_owner and logs %}
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.log|safe }} گزارش فعالیت
+    <span class="sub">مجموع: {{ logs_total }} رکورد — صفحه {{ logs_page }} از {{ logs_pages }}</span>
+  </h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>زمان</th><th>کاربر</th><th>عملیات</th><th>هدف</th></tr>
+      {% for log in logs %}
+      <tr>
+        <td style="font-size:11px;color:var(--muted)">{{ log.at }}</td>
+        <td>{{ log.actor_name or '—' }}</td>
+        <td>{{ log.action }}</td>
+        <td style="font-size:11px;color:var(--muted)">{{ log.target or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% if logs_pages > 1 %}
+  <div class="badge-pagination">
+    {% if logs_page > 1 %}<a href="?logs_page={{ logs_page - 1 }}">‹</a>{% endif %}
+    {% for p in range(1, logs_pages + 1) %}
+      {% if p == logs_page %}<span class="current">{{ p }}</span>
+      {% elif p <= 3 or p > logs_pages - 3 or (p >= logs_page - 1 and p <= logs_page + 1) %}
+        <a href="?logs_page={{ p }}">{{ p }}</a>
+      {% elif p == 4 or p == logs_pages - 3 %}<span>…</span>{% endif %}
+    {% endfor %}
+    {% if logs_page < logs_pages %}<a href="?logs_page={{ logs_page + 1 }}">›</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{# ==================== معلم ==================== #}
+{% elif user.role == 'teacher' %}
+<section class="panel-card" style="margin-bottom:18px">
+  <h2>{{ icons.users|safe }} انتخاب کلاس</h2>
+  <form method="post" action="{{ url_for('teacher_select_class') }}" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="class_name">
+      <option value="">— هیچ کلاسی —</option>
+      {% for c in classes %}<option value="{{ c }}" {% if c == selected_class %}selected{% endif %}>کلاس {{ c }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-primary" type="submit">تغییر کلاس</button>
+  </form>
+</section>
+
+{% if selected_class %}
+<div class="tips-box">کلاس فعال: <strong>{{ selected_class }}</strong></div>
+<div class="panel-grid">
+  <section class="panel-card">
+    <h2>{{ icons.plus|safe }} ثبت تکلیف
+      <span class="sub">می‌توانید فایل PDF، Word، Excel، PowerPoint پیوست کنید.</span>
+    </h2>
+    <form class="panel-form" method="post" action="{{ url_for('teacher_add_homework') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input name="title" required maxlength="160" placeholder="عنوان">
+      <textarea name="body" required maxlength="5000" placeholder="توضیحات"></textarea>
+      <input name="subject" maxlength="80" placeholder="درس (اختیاری)">
+      <input name="due_date" type="date">
+      <input type="file" name="image" accept="image/*">
+      <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.odt,.ods,.odp">
+      <button class="btn btn-primary" type="submit">ثبت تکلیف</button>
+    </form>
+  </section>
+  <section class="panel-card">
+    <h2>{{ icons.check|safe }} ثبت نمره</h2>
+    <form class="panel-form" method="post" action="{{ url_for('teacher_add_grade') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <select name="student_id" required>
+        <option value="">— دانش‌آموز —</option>
+        {% for s in students %}<option value="{{ s.id }}">{{ s.full_name }}</option>{% endfor %}
+      </select>
+      <input name="subject" required maxlength="80" placeholder="نام درس">
+      <input name="score" type="number" required min="0" max="20" step="0.25" placeholder="نمره">
+      <input name="term" maxlength="40" placeholder="نوبت">
+      <input name="note" maxlength="500" placeholder="توضیح">
+      <button class="btn btn-primary" type="submit">ذخیره</button>
+    </form>
+  </section>
+</div>
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.users|safe }} دانش‌آموزان کلاس {{ selected_class }}</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>نام</th><th>نام کاربری</th><th>وضعیت</th></tr>
+      {% for s in students %}
+      <tr><td>{{ s.full_name }}</td><td><code>{{ s.username }}</code></td>
+        <td>{% if s.is_active %}<span class="badge badge-student">فعال</span>
+            {% else %}<span class="badge badge-off">غیرفعال</span>{% endif %}</td></tr>
+      {% else %}<tr><td colspan="3" class="empty">دانش‌آموزی نیست.</td></tr>{% endfor %}
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.news|safe }} تکالیف اخیر شما</h2>
+  <div class="panel-list">
+    {% for h in my_homework %}
+    <li><strong>{{ h.title }}</strong>
+      <small>{{ h.created_at }}{% if h.due_date %} — مهلت: {{ h.due_date }}{% endif %}</small>
+      <div style="margin-top:6px;font-size:12px">{{ h.body }}</div>
+      {% if h.image %}<img class="thumb" src="/static/uploads/{{ h.image }}" alt="">{% endif %}
+      {% if h.attachment %}
+      <a class="file-chip" href="{{ url_for('protected_attachment', filename=h.attachment) }}">{{ icons.download|safe }} فایل پیوست</a>
+      {% endif %}
+      {% if user.role == 'teacher' %}
+      <form method="post" action="{{ url_for('teacher_delete_homework', hid=h.id) }}" onsubmit="return confirm('حذف؟')" style="margin-top:8px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger btn-tiny">حذف</button>
+      </form>
+      {% endif %}
+    </li>
+    {% else %}<li class="empty">تکلیفی نیست.</li>{% endfor %}
+  </div>
+</section>
+
+<section class="panel-card full" style="margin-top:18px">
+  <h2>{{ icons.bell|safe }} اطلاعیه‌ها</h2>
+  <div class="panel-list">
+    {% for a in announcements %}
+    <li><strong>{{ a.title }}</strong>
+      <div style="margin:4px 0">{{ author_html(a.creator_name, a.creator_role)|safe }}</div>
+      <small>{{ a.created_at }}</small>
+      <div style="margin-top:6px;font-size:12px">{{ a.body }}</div>
+      {% if a.image %}<img class="thumb" src="/static/uploads/{{ a.image }}" alt="">{% endif %}
+      {% if a.attachment %}
+      <a class="file-chip" href="{{ url_for('public_file', filename=a.attachment) }}" target="_blank">{{ icons.download|safe }} فایل پیوست</a>
+      {% endif %}
+    </li>
+    {% else %}<li class="empty">اطلاعیه‌ای نیست.</li>{% endfor %}
+  </div>
+</section>
+
+{# ==================== دانش‌آموز ==================== #}
+{% else %}
+<div class="tips-box">کلاس شما: <strong>{{ student_class or 'تعیین نشده' }}</strong></div>
+
+<section class="panel-card" style="margin-bottom:18px">
+  <h2>{{ icons.bell|safe }} اطلاعیه‌ها</h2>
+  <div class="panel-list">
+    {% for a in announcements %}
+    <li><strong>{% if a.is_pinned %}📌 {% endif %}{{ a.title }}</strong>
+      <div style="margin:4px 0">{{ author_html(a.creator_name, a.creator_role)|safe }}</div>
+      <small>{{ a.created_at }}</small>
+      <div style="margin-top:6px;font-size:12px">{{ a.body }}</div>
+      {% if a.image %}<img class="thumb" src="/static/uploads/{{ a.image }}" alt="">{% endif %}
+      {% if a.attachment %}
+      <a class="file-chip" href="{{ url_for('public_file', filename=a.attachment) }}" target="_blank">{{ icons.download|safe }} فایل پیوست</a>
+      {% endif %}
+    </li>
+    {% else %}<li class="empty">اطلاعیه‌ای نیست.</li>{% endfor %}
+  </div>
+</section>
+
+<section class="panel-card" style="margin-bottom:18px">
+  <h2>{{ icons.news|safe }} تکالیف کلاس {{ student_class or '—' }}
+    <span class="sub">می‌توانید متن یا فایل PDF/Word/Excel/PowerPoint ارسال کنید.</span>
+  </h2>
+  <div class="panel-list">
+    {% for h in my_homework %}
+    <li><strong>{{ h.title }}</strong>
+      <div style="margin:4px 0">{{ author_html(h.creator_name, h.creator_role or 'teacher')|safe }}</div>
+      <small>{% if h.subject %}{{ h.subject }} — {% endif %}
+        {% if h.due_date %}مهلت: {{ h.due_date }}{% else %}بدون مهلت{% endif %}</small>
+      <div style="margin-top:6px;font-size:12px">{{ h.body }}</div>
+      {% if h.image %}<img class="thumb" src="/static/uploads/{{ h.image }}" alt="">{% endif %}
+      {% if h.attachment %}
+      <a class="file-chip" href="{{ url_for('protected_attachment', filename=h.attachment) }}">{{ icons.download|safe }} دریافت فایل ضمیمهٔ معلم</a>
+      {% endif %}
+      <form method="post" action="{{ url_for('submit_homework') }}" enctype="multipart/form-data" style="margin-top:10px;display:grid;gap:8px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="homework_id" value="{{ h.id }}">
+        <textarea name="body" maxlength="10000" placeholder="پاسخ متنی (اختیاری)"></textarea>
+        <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.odt,.ods,.odp,.png,.jpg,.jpeg,.gif,.webp">
+        <button class="btn btn-primary btn-tiny" type="submit">ارسال پاسخ / فایل</button>
+      </form>
+    </li>
+    {% else %}<li class="empty">تکلیفی نیست.</li>{% endfor %}
+  </div>
+</section>
+
+<section class="panel-card" style="margin-bottom:18px">
+  <h2>{{ icons.check|safe }} نمرات من</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>درس</th><th>نمره</th><th>نوبت</th><th>توضیحات</th><th>تاریخ</th></tr>
+      {% for g in my_grades %}
+      <tr><td>{{ g.subject }}</td><td><strong>{{ g.score }}</strong> / ۲۰</td>
+        <td>{{ g.term or '—' }}</td><td>{{ g.note or '—' }}</td>
+        <td style="font-size:11px;color:var(--muted)">{{ g.created_at[:10] }}</td></tr>
+      {% else %}<tr><td colspan="5" class="empty">نمره‌ای ثبت نشده.</td></tr>{% endfor %}
+    </table>
+  </div>
+</section>
+
+<section class="panel-card">
+  <h2>{{ icons.news|safe }} اخبار و رویدادها</h2>
+  <div class="panel-list">
+    {% for p in posts %}
+    <li>
+      <span class="post-type-badge pt-{{ p.type }}">{{ post_types[p.type] }}</span>
+      <strong>{{ p.title }}</strong>
+      <div style="margin:4px 0">{{ author_html(p.creator_name, p.creator_role)|safe }}</div>
+      <small>{{ p.created_at[:10] }}</small>
+      <div style="margin-top:6px;font-size:12px">{{ p.body }}</div>
+      {% if p.image %}<img class="thumb" src="/static/uploads/{{ p.image }}" alt="">{% endif %}
+      {% if p.attachment %}
+      <a class="file-chip" href="{{ url_for('public_file', filename=p.attachment) }}" target="_blank">{{ icons.download|safe }} فایل پیوست</a>
+      {% endif %}
+    </li>
+    {% else %}<li class="empty">پستی ثبت نشده.</li>{% endfor %}
+  </div>
+</section>
+{% endif %}
+</main>
+</body></html>

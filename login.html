@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ورود / ثبت‌نام | {{ site_name }}</title>
+<style>{{ style|safe }}</style></head><body>
+
+<header class="nav-wrap"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{{ icons.school|safe }}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <a href="/" class="btn btn-light">بازگشت به خانه</a>
+</div></header>
+
+<main class="login-wrap"><div class="login-card">
+  <div class="brand-mark" style="margin-bottom:16px">{{ icons.login|safe }}</div>
+  <h1>ورود / ثبت‌نام</h1>
+  <p>نقش خود را انتخاب کنید.</p>
+
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="notice notice-{{ cat }}">{{ msg }}</div>
+  {% endfor %}
+
+  <div class="login-tabs">
+    <button type="button" class="login-tab {% if active_role in ('owner','admin') or not active_role %}active{% endif %}" onclick="switchTab('admin')">مدیر</button>
+    <button type="button" class="login-tab {% if active_role == 'teacher' %}active{% endif %}" onclick="switchTab('teacher')">معلم</button>
+    <button type="button" class="login-tab {% if active_role == 'student' %}active{% endif %}" onclick="switchTab('student')">دانش‌آموز</button>
+    <button type="button" class="login-tab {% if active_role == 'parent' %}active{% endif %}" onclick="switchTab('parent')">والدین</button>
+  </div>
+
+  <div class="tab-panel {% if active_role in ('owner','admin') or not active_role %}active{% endif %}" id="panel-admin">
+    <div style="display:flex;gap:4px;margin-bottom:14px;background:#f1f5f9;padding:4px;border-radius:10px">
+      <button type="button" class="login-tab active" id="adm-mode-owner" onclick="adminMode('owner')" style="padding:8px;margin:0;border-radius:8px;border-bottom:0">مدیر ارشد</button>
+      <button type="button" class="login-tab" id="adm-mode-login" onclick="adminMode('admin')" style="padding:8px;margin:0;border-radius:8px;border-bottom:0">مدیر عادی</button>
+      <button type="button" class="login-tab" id="adm-mode-register" onclick="adminMode('register')" style="padding:8px;margin:0;border-radius:8px;border-bottom:0">ثبت‌نام مدیر</button>
+    </div>
+
+    <div id="adm-owner-box">
+      {% if not has_owner %}
+        <div class="tab-hint">
+          <strong>👑 راه‌اندازی اولیه:</strong> هیچ مدیر ارشدی وجود ندارد.
+          لطفاً اولین حساب مدیر ارشد را بسازید. رمز باید حداقل <strong>۱۲ نویسه</strong> باشد.
+        </div>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="role" value="owner">
+          <input type="hidden" name="mode" value="register">
+          <div class="field"><label>نام کاربری مدیر ارشد</label>
+            <input type="text" name="username" required maxlength="40"
+                   pattern="[a-zA-Z0-9_.-]{3,40}" placeholder="admin" autocomplete="username">
+          </div>
+          <div class="field"><label>نام و نام خانوادگی</label>
+            <input type="text" name="full_name" required minlength="3" maxlength="80"
+                   placeholder="مدیر مدرسه">
+          </div>
+          <div class="field"><label>رمز عبور (حداقل ۱۲ نویسه)</label>
+            <input type="password" name="password" required minlength="12" maxlength="128"
+                   placeholder="رمز قوی" autocomplete="new-password">
+          </div>
+          <div class="field"><label>تکرار رمز عبور</label>
+            <input type="password" name="confirm" required minlength="12" maxlength="128"
+                   placeholder="همان رمز" autocomplete="new-password">
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-top:8px">
+            ساخت حساب مدیر ارشد {{ icons.check|safe }}
+          </button>
+        </form>
+        <p class="tab-hint" style="margin-top:14px">
+          <strong>⚠ توجه:</strong> این صفحه فقط یک بار نمایش داده می‌شود. رمز را جای امن نگه دارید.
+        </p>
+      {% else %}
+        <div class="tab-hint">
+          ورود مدیر ارشد با <strong>نام کاربری + رمز عبور</strong> خودتان.
+        </div>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="role" value="owner">
+          <input type="hidden" name="mode" value="login">
+          <div class="field"><label>نام کاربری</label>
+            <input type="text" name="username" required maxlength="40"
+                   placeholder="admin" autocomplete="username">
+          </div>
+          <div class="field"><label>رمز عبور</label>
+            <input type="password" name="password" required maxlength="128"
+                   placeholder="رمز" autocomplete="current-password">
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-top:8px">
+            ورود مدیر ارشد {{ icons.crown|safe }}
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    <div id="adm-login-box" style="display:none">
+      <div class="tab-hint">ورود مدیر عادی با نام کاربری و رمز عبور.</div>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="role" value="admin">
+        <input type="hidden" name="mode" value="login">
+        <div class="field"><label>نام کاربری</label>
+          <input type="text" name="username" required maxlength="40"
+                 placeholder="نام کاربری" autocomplete="username">
+        </div>
+        <div class="field"><label>رمز ورود</label>
+          <input type="password" name="password" required placeholder="رمز">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px">
+          ورود مدیر {{ icons.arrow|safe }}
+        </button>
+      </form>
+    </div>
+
+    <div id="adm-register-box" style="display:none">
+      <div class="tab-hint">
+        برای ساخت مدیر عادی، کد مدیر را از مدیر ارشد بگیرید. رمز حداقل <strong>۱۲ نویسه</strong>.
+        حساب شما پس از تأیید مدیر ارشد فعال می‌شود.
+      </div>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="role" value="admin">
+        <input type="hidden" name="mode" value="register">
+        <div class="field"><label>کد ثبت‌نام مدیر</label>
+          <input type="text" name="code" required maxlength="20" placeholder="ABC12345">
+        </div>
+        <div class="field"><label>نام کاربری</label>
+          <input type="text" name="username" required maxlength="40"
+                 pattern="[a-zA-Z0-9_.-]{3,40}" placeholder="admin2">
+        </div>
+        <div class="field"><label>نام کامل</label>
+          <input type="text" name="full_name" required minlength="3" maxlength="80"
+                 placeholder="مدیر دوم">
+        </div>
+        <div class="field"><label>رمز عبور (حداقل ۱۲ نویسه)</label>
+          <input type="password" name="password" required minlength="12" maxlength="128"
+                 placeholder="حداقل ۱۲ نویسه">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px">
+          ارسال درخواست ثبت‌نام {{ icons.arrow|safe }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="tab-panel {% if active_role == 'teacher' %}active{% endif %}" id="panel-teacher">
+    <div class="tab-hint">
+      ورود: نام‌کاربری + رمز. ثبت‌نام: کد معلم از مدیر بگیرید (رمز حداقل ۱۰ نویسه).
+      حساب شما پس از تأیید مدیر فعال می‌شود.
+    </div>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="role" value="teacher">
+      <div class="field"><label>نام کاربری</label>
+        <input type="text" name="username" required maxlength="40" placeholder="نام کاربری">
+      </div>
+      <div class="field"><label>رمز عبور</label>
+        <input type="password" name="password" required minlength="8" maxlength="128" placeholder="رمز عبور">
+      </div>
+      <div class="field"><label>کد معلم (برای ثبت‌نام)</label>
+        <input type="text" name="code" maxlength="20" placeholder="اختیاری — برای ثبت‌نام جدید">
+      </div>
+      <div class="field"><label>نام کامل (برای ثبت‌نام)</label>
+        <input type="text" name="full_name" maxlength="80" placeholder="نام و نام خانوادگی">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px">
+        ادامه {{ icons.arrow|safe }}
+      </button>
+    </form>
+  </div>
+
+  <div class="tab-panel {% if active_role == 'student' %}active{% endif %}" id="panel-student">
+    <div class="tab-hint">
+      ورود: نام‌کاربری + رمز. ثبت‌نام: کد دانش‌آموز از مدیر بگیرید (رمز حداقل ۸ نویسه).
+      حساب شما پس از تأیید مدیر فعال می‌شود.
+    </div>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="role" value="student">
+      <div class="field"><label>نام کاربری</label>
+        <input type="text" name="username" required maxlength="40" placeholder="نام کاربری">
+      </div>
+      <div class="field"><label>رمز عبور</label>
+        <input type="password" name="password" required minlength="8" maxlength="128" placeholder="رمز عبور">
+      </div>
+      <div class="field"><label>کد دانش‌آموز (برای ثبت‌نام)</label>
+        <input type="text" name="code" maxlength="20" placeholder="اختیاری — برای ثبت‌نام جدید">
+      </div>
+      <div class="field"><label>نام کامل (برای ثبت‌نام)</label>
+        <input type="text" name="full_name" maxlength="80" placeholder="نام و نام خانوادگی">
+      </div>
+      <div class="field"><label>کلاس (برای ثبت‌نام)</label>
+        <select name="class_name">
+          <option value="">— انتخاب کنید —</option>
+          {% for c in classes %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px">
+        ادامه {{ icons.arrow|safe }}
+      </button>
+    </form>
+  </div>
+
+  <div class="tab-panel {% if active_role == 'parent' %}active{% endif %}" id="panel-parent">
+    <div class="tab-hint">ورود با نام کاربری و رمز. برای ثبت‌نام، کد والدین را از مدرسه بگیرید و نام کاربری فرزندِ فعال را وارد کنید. درخواست پس از تأیید مدرسه فعال می‌شود.</div>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="role" value="parent">
+      <div class="field"><label>نام کاربری والد</label><input type="text" name="username" required maxlength="40" pattern="[a-zA-Z0-9_.-]{3,40}"></div>
+      <div class="field"><label>رمز عبور</label><input type="password" name="password" required minlength="8" maxlength="128"></div>
+      <div class="field"><label>کد والدین (برای ثبت‌نام)</label><input type="text" name="code" maxlength="20" placeholder="برای ورود خالی بگذارید"></div>
+      <div class="field"><label>نام و نام خانوادگی والد (برای ثبت‌نام)</label><input type="text" name="full_name" maxlength="80"></div>
+      <div class="field"><label>نام کاربری دانش‌آموز فرزند (برای ثبت‌نام)</label><input type="text" name="child_username" maxlength="40" pattern="[a-zA-Z0-9_.-]{3,40}"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px">ادامه {{ icons.arrow|safe }}</button>
+    </form>
+  </div>
+</div></main>
+
+<script>
+function switchTab(name){
+    var tabs = document.querySelectorAll('.login-tabs > .login-tab');
+    var names = ['admin','teacher','student','parent'];
+    tabs.forEach(function(t,i){t.classList.toggle('active', names[i] === name);});
+    document.querySelectorAll('.tab-panel').forEach(function(p){
+        p.classList.toggle('active', p.id === 'panel-' + name);
+    });
+}
+function adminMode(m){
+    var o=document.getElementById('adm-owner-box'),
+        l=document.getElementById('adm-login-box'),
+        r=document.getElementById('adm-register-box');
+    if(o) o.style.display = m === 'owner' ? 'block' : 'none';
+    if(l) l.style.display = m === 'admin' ? 'block' : 'none';
+    if(r) r.style.display = m === 'register' ? 'block' : 'none';
+    ['owner','login','register'].forEach(function(k){
+        var el=document.getElementById('adm-mode-'+k);
+        if(el) el.classList.toggle('active', (m==='owner'&&k==='owner')||(m==='admin'&&k==='login')||(m==='register'&&k==='register'));
+    });
+}
+</script>
+</body></html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>کارنامه {{ student.full_name }} | {{ site_name }}</title>
+<style>{{ style|safe }}
+@media print{
+  .no-print{display:none !important}
+  body{background:#fff}
+  .container{margin:0;padding:0;width:100%}
+  .panel-heading{border-radius:0;box-shadow:none}
+}
+</style></head><body>
+<header class="nav-wrap no-print"><div class="container nav">
+  <a href="/" class="brand">
+    <span class="brand-mark">{% if site_logo %}<img src="/static/uploads/{{ site_logo }}" alt="">{% else %}{{ icons.school|safe }}{% endif %}</span>
+    <span><span class="brand-name">{{ site_name }}</span>
+      <span class="brand-sub">ALLAMEH SCHOOL</span></span>
+  </a>
+  <div class="panel-nav">
+    <button class="btn btn-primary" onclick="window.print()">{{ icons.download|safe }} چاپ / PDF</button>
+    <a href="{{ url_for('admin_panel') }}" class="btn btn-light">بازگشت</a>
+    <form method="post" action="{{ url_for('logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-danger" type="submit">خروج</button>
+    </form>
+  </div>
+</div></header>
+
+<main class="container panel-wrap">
+<section class="panel-heading">
+  <div><h1>کارنامه تحصیلی</h1><p>{{ site_name }}</p></div>
+  <span class="badge-role">{{ icons.book|safe }} کارنامه</span>
+</section>
+
+<section class="panel-card full">
+  <div class="panel-grid" style="gap:14px;margin-bottom:20px">
+    <div class="field" style="margin:0">
+      <label>نام دانش‌آموز</label>
+      <div style="padding:10px;background:#f7f9fd;border-radius:10px;font-weight:700">{{ student.full_name }}</div>
+    </div>
+    <div class="field" style="margin:0">
+      <label>کلاس</label>
+      <div style="padding:10px;background:#f7f9fd;border-radius:10px;font-weight:700">{{ student.class_name or '—' }}</div>
+    </div>
+    <div class="field" style="margin:0">
+      <label>نام کاربری</label>
+      <div style="padding:10px;background:#f7f9fd;border-radius:10px"><code>{{ student.username }}</code></div>
+    </div>
+  </div>
+
+  <h2>{{ icons.check|safe }} نمرات</h2>
+  <div class="panel-table-wrap">
+    <table class="panel-table">
+      <tr><th>درس</th><th>نوبت</th><th>نمره</th><th>توضیحات</th><th>تاریخ</th></tr>
+      {% for g in grades %}
+      <tr>
+        <td>{{ g.subject }}</td>
+        <td>{{ g.term or '—' }}</td>
+        <td><strong>{{ g.score }}</strong> / ۲۰</td>
+        <td>{{ g.note or '—' }}</td>
+        <td style="font-size:11px;color:var(--muted)">{{ g.created_at[:10] }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="empty">نمره‌ای ثبت نشده است.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <p style="font-size:11px;color:var(--muted);margin-top:16px">این کارنامه از اطلاعات ثبت‌شده در سامانه تهیه شده است.</p>
+</section>
+</main>
+</body></html>
